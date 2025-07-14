@@ -1,0 +1,16 @@
+{
+  "name": "luxesupply-oauth-callback",
+  "version": "1.0.0",
+  "description": "OAuth callback page for LuxeSupply Photo App",
+  "main": "index.js",
+  "scripts": {
+    "start": "serve .",
+    "build": "echo 'No build step needed'"
+  },
+  "dependencies": {
+    "serve": "^14.2.0"
+  },
+  "keywords": ["oauth", "callback", "luxesupply"],
+  "author": "LuxeSupply",
+  "license": "MIT"
+} 
