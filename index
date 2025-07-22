@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazon Auth Callback</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .loading {
+            color: #666;
+            margin: 20px 0;
+        }
+        .error {
+            color: #d32f2f;
+            margin: 20px 0;
+        }
+        .success {
+            color: #2e7d32;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Amazon Authentication</h2>
+        <div id="status" class="loading">Processing authentication...</div>
+    </div>
+
+    <script>
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const state = urlParams.get('state');
+        const error = urlParams.get('error');
+        const errorDescription = urlParams.get('error_description');
+
+        const statusDiv = document.getElementById('status');
+
+        if (error) {
+            // Handle error
+            statusDiv.className = 'error';
+            statusDiv.innerHTML = `Authentication failed: ${error}<br><small>${errorDescription || ''}</small>`;
+        } else if (code) {
+            // Success - redirect to app
+            statusDiv.className = 'success';
+            statusDiv.innerHTML = 'Authentication successful! Redirecting to app...';
+            
+            // Redirect to our app using the custom URL scheme
+            const appUrl = `amzn-amazonpurchasehistory://auth?code=${code}&state=${state || ''}`;
+            
+            // Try to redirect to the app
+            window.location.href = appUrl;
+            
+            // Fallback: if app doesn't open, show instructions
+            setTimeout(() => {
+                statusDiv.innerHTML = `
+                    <div class="success">
+                        Authentication successful!<br>
+                        <small>If the app didn't open automatically, please return to the Amazon Purchase History app.</small>
+                    </div>
+                `;
+            }, 2000);
+        } else {
+            // No code or error
+            statusDiv.className = 'error';
+            statusDiv.innerHTML = 'Invalid callback - no authorization code received.';
+        }
+    </script>
+</body>
+</html> 
