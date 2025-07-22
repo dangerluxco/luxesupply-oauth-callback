@@ -31,12 +31,25 @@
             color: #2e7d32;
             margin: 20px 0;
         }
+        .button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Amazon Authentication</h2>
         <div id="status" class="loading">Processing authentication...</div>
+        <div id="actions" style="display: none;">
+            <button class="button" onclick="openApp()">Open App</button>
+            <button class="button" onclick="copyCode()">Copy Code</button>
+        </div>
     </div>
 
     <script>
@@ -48,35 +61,72 @@
         const errorDescription = urlParams.get('error_description');
 
         const statusDiv = document.getElementById('status');
+        const actionsDiv = document.getElementById('actions');
 
         if (error) {
             // Handle error
             statusDiv.className = 'error';
             statusDiv.innerHTML = `Authentication failed: ${error}<br><small>${errorDescription || ''}</small>`;
         } else if (code) {
-            // Success - redirect to app
+            // Success - try to redirect to app
             statusDiv.className = 'success';
-            statusDiv.innerHTML = 'Authentication successful! Redirecting to app...';
+            statusDiv.innerHTML = 'Authentication successful! Attempting to open app...';
             
-            // Redirect to our app using the custom URL scheme
-            const appUrl = `amzn-amazonpurchasehistory://auth?code=${code}&state=${state || ''}`;
+            // Try multiple deep link formats
+            const appUrls = [
+                `amzn-amazonpurchasehistory://auth?code=${code}&state=${state || ''}`,
+                `amzn-amazonpurchasehistory://?code=${code}&state=${state || ''}`,
+                `amzn-amazonpurchasehistory://callback?code=${code}&state=${state || ''}`
+            ];
             
-            // Try to redirect to the app
-            window.location.href = appUrl;
+            let opened = false;
             
-            // Fallback: if app doesn't open, show instructions
+            // Try to open the app
+            for (let i = 0; i < appUrls.length; i++) {
+                try {
+                    window.location.href = appUrls[i];
+                    opened = true;
+                    break;
+                } catch (e) {
+                    console.log('Failed to open with URL:', appUrls[i]);
+                }
+            }
+            
+            // Show fallback options
             setTimeout(() => {
                 statusDiv.innerHTML = `
                     <div class="success">
                         Authentication successful!<br>
-                        <small>If the app didn't open automatically, please return to the Amazon Purchase History app.</small>
+                        <small>Authorization code: ${code}</small><br>
+                        <small>If the app didn't open automatically, use the buttons below.</small>
                     </div>
                 `;
+                actionsDiv.style.display = 'block';
             }, 2000);
         } else {
             // No code or error
             statusDiv.className = 'error';
             statusDiv.innerHTML = 'Invalid callback - no authorization code received.';
+        }
+
+        function openApp() {
+            const appUrl = `amzn-amazonpurchasehistory://auth?code=${code}&state=${state || ''}`;
+            window.location.href = appUrl;
+        }
+
+        function copyCode() {
+            navigator.clipboard.writeText(code).then(() => {
+                alert('Authorization code copied to clipboard!');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = code;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('Authorization code copied to clipboard!');
+            });
         }
     </script>
 </body>
